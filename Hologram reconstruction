@@ -1,1 +1,57 @@
+clear ;close all;clc;
+
+H1=double(imread('H:\SHUJU\denoising\1.bmp'));
+%H1=double(imread('H:\SHUJU\denoising\outputs_2022-07-31-20-20-42\all_result\076_1_all_pred.bmp')); 
+[N0,M0]=size(H1);
+M=M0;
+N=N0;
+[n,m]=meshgrid(1:M,1:N);
+res=2.2*0.001;
+wave=632*0.001*0.001;
+re_dis=50;%重建距离
+dist=1;
+H2=fftshift(fft2(H1));
+figure,imshow(mat2gray(log(abs(H2))));title('频谱图');
+
+%%%%%%%%%%%取一级像%%%%%%%%%%%
+g=100;h=100;%去掉中心框的尺寸
+H2(N/2-g:N/2+g,M/2-h:M/2+h)=0;
+H2(1:1,:)=0+0i;   %第一列设为0，H1[1，1]会有干扰
+figure,imshow(mat2gray(abs(H2).^0.1));
+[ii,jj]=find(abs(H2)==max(max(abs(H2))));
+H3=zeros(N,M);
+k=100; %取频谱的框大小
+g1=100;
+p=1;%由于频谱图的对称性，正负一级项峰值相同，故可以通过改变此值选择一项，尽可以写1或2
+H3(N/2-k+1:N/2+k+1,M/2-g1+1:M/2+g1+1)=H2(ii(p)-k:ii(p)+k,jj(p)-g1:jj(p)+g1);%取出一级像
+figure,imshow(mat2gray(abs(H3).^0.1));
+H4=ifft2(fftshift(H3));
+
+%卷积重建
+g2=sqrt(re_dis.^2+((n-M/2).^2+(m-N/2).^2)*res.^2);
+gg=exp(1i*2*pi.*g2/wave)./(1i*wave*g2);
+
+%参考光
+lx=0.01;
+ly=0.01;
+R=exp(1i*(2*pi/wave)*(lx.*(n-M/2)*res+ly.*(m-N/2)*res));
+object=fftshift(ifft2(fft2(H4).*fft2(gg)));
+inten=abs(object);
+%figure;imshow(mat2gray(inten));title('重建图')
+phase=angle(object);
+%figure,mesh(phase);colorbar;title('解包裹前相位图')
+k1=my_unwrap(phase);
+figure,mesh(k1);colorbar;;title('相位图')
+iii0=mean2(inten);
+
+d1=20;   %上下减去宽度
+d2=20; %左右减去宽度  裁剪处理
+inten00(:,:)=inten(d1:N-d1-1,d2:M-d2-1);
+
+inten00(1:N,1:M)=iii0; %加边框处理
+inten00(d1:N-d1,d2:M-d2)=inten(d1:N-d1,d2:M-d2);
+
+figure;imshow(mat2gray(inten00));title('强度图')
+inten=inten00;
+%%%%%%%%%%%%%%%%%%
 
