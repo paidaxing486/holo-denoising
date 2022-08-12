@@ -12,4 +12,4 @@
 
 第四步：model可以选择CNN,U-Net,和MSDNET。注：MSDNET中存在dropout模块，需要额外的test文件。
 
-第五步：train.py
+第五步：直接holo_train4.py。注：holo_train4.py不针对大图像，关于大图像的切片训练程序不在其中。
